@@ -313,8 +313,24 @@ void register(T)(void* handle, GDNativeLibrary lib) if(is(T == class))
 			Property.Usage.scriptVariable);
 		
 		Variant defval;
-		enum gDef = getterMatches.length && hasUDA!(getterMatches[0], DefaultValue);
-		enum sDef = getterMatches.length && hasUDA!(setterMatches[0], DefaultValue);
+		static if(getterMatches.length)
+		{
+			enum gDef = hasUDA!(getterMatches[0], DefaultValue);
+		}
+		else
+		{
+			/*This seems really inelegant, but simply trying to use short-circuiting causes
+			it to try to index the (empty) tuple anyway, resulting in a compiler error.*/
+			enum gDef = false;
+		}
+		static if(setterMatches.length)
+		{
+			enum sDef = hasUDA!(setterMatches[0], DefaultValue);
+		}
+		else
+		{
+			enum sDef = false;
+		}
 		static if(gDef || sDef)
 		{
 			static if(gDef) alias defExprSeq = TemplateArgsOf!(getUDAs!(getterMatches[0], DefaultValue)[0]);
